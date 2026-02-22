@@ -1,0 +1,5 @@
+# Deno cache
+.deno/
+
+# Coverage reports
+coverage/

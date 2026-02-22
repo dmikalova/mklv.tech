@@ -1,6 +1,6 @@
 # mklv.tech
 
-Warming service and landing page for mklv.tech.
+Landing page for mklv.tech.
 
 ## Features
 
