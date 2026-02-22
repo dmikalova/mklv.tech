@@ -6,10 +6,11 @@ const REGION = Deno.env.get("GCP_REGION") || "us-west1";
 const TIMEOUT_MS = 5000;
 
 // Initialize client at module level to avoid cold-start gRPC connection delays
-// during request handling. The 60s timeout allows for slow initial connections.
-const client = new ServicesClient({
-  timeout: 60000,
-});
+// during request handling.
+const client = new ServicesClient();
+
+// Timeout for Cloud Run Admin API calls (60s to handle cold gRPC connections)
+const API_TIMEOUT_MS = 60000;
 
 interface WarmResult {
   service: string;
@@ -24,10 +25,12 @@ interface WarmResult {
  * Uses @google-cloud/run for service discovery via Cloud Run Admin API.
  */
 export async function warmServices(): Promise<WarmResult[]> {
-
   // List all services in the project/region
   const parent = `projects/${PROJECT_ID}/locations/${REGION}`;
-  const [services] = await client.listServices({ parent });
+  const [services] = await client.listServices(
+    { parent },
+    { timeout: API_TIMEOUT_MS },
+  );
 
   // Filter to services with warm=true label
   const warmableServices = services.filter(
