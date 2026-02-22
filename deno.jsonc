@@ -4,9 +4,8 @@
 
   // Import map for npm packages and external dependencies
   "imports": {
-    "@google-cloud/run": "npm:@google-cloud/run@^1",
     "@std/assert": "jsr:@std/assert@^1.0.18",
-    "hono": "npm:hono@^4"
+    "hono": "npm:hono@^4",
   },
 
   // Available tasks: deno task <name>
@@ -24,7 +23,7 @@
     // Install git hooks (run once after clone)
     "setup": "lefthook install",
     // Run tests
-    "test": "deno test --permission-set tests/"
+    "test": "deno test --permission-set tests/",
   },
 
   // Default permissions for tasks
@@ -32,24 +31,24 @@
     "default": {
       "env": true,
       "net": true,
-      "read": true
-    }
+      "read": true,
+    },
   },
 
   // Formatting options
   "fmt": {
     "lineWidth": 80,
     "semiColons": true,
-    "singleQuote": false
+    "singleQuote": false,
   },
 
   // Lint options
   "lint": {
     "rules": {
-      "tags": ["recommended"]
-    }
+      "tags": ["recommended"],
+    },
   },
 
   // Exclude generated files from linting/formatting
-  "exclude": ["coverage/", ".git/"]
+  "exclude": ["coverage/", ".git/"],
 }

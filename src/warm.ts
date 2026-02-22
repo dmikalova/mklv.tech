@@ -1,16 +1,9 @@
 // Warming service - discovers Cloud Run services and warms them
-import { ServicesClient } from "@google-cloud/run";
+// Uses Cloud Run Admin REST API (not gRPC) for Deno compatibility.
 
 const PROJECT_ID = Deno.env.get("GCP_PROJECT_ID") || "mklv-infrastructure";
 const REGION = Deno.env.get("GCP_REGION") || "us-west1";
 const TIMEOUT_MS = 5000;
-
-// Initialize client at module level to avoid cold-start gRPC connection delays
-// during request handling.
-const client = new ServicesClient();
-
-// Timeout for Cloud Run Admin API calls (60s to handle cold gRPC connections)
-const API_TIMEOUT_MS = 60000;
 
 interface WarmResult {
   service: string;
@@ -20,17 +13,65 @@ interface WarmResult {
   error?: string;
 }
 
+interface CloudRunService {
+  name: string;
+  uri: string;
+  labels?: Record<string, string>;
+}
+
+interface ListServicesResponse {
+  services?: CloudRunService[];
+}
+
+/**
+ * Gets an access token from the GCE metadata server.
+ * This works automatically on Cloud Run.
+ */
+async function getAccessToken(): Promise<string> {
+  const metadataUrl =
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+  const response = await fetch(metadataUrl, {
+    headers: { "Metadata-Flavor": "Google" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get access token: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+/**
+ * Lists Cloud Run services using the REST API.
+ */
+async function listServices(): Promise<CloudRunService[]> {
+  const token = await getAccessToken();
+  const url = `https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/services`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud Run API error ${response.status}: ${text}`);
+  }
+
+  const data: ListServicesResponse = await response.json();
+  return data.services || [];
+}
+
 /**
  * Discovers Cloud Run services with warm=true label and hits their /health endpoints.
- * Uses @google-cloud/run for service discovery via Cloud Run Admin API.
+ * Uses Cloud Run Admin REST API for service discovery.
  */
 export async function warmServices(): Promise<WarmResult[]> {
   // List all services in the project/region
-  const parent = `projects/${PROJECT_ID}/locations/${REGION}`;
-  const [services] = await client.listServices(
-    { parent },
-    { timeout: API_TIMEOUT_MS },
-  );
+  const services = await listServices();
 
   // Filter to services with warm=true label
   const warmableServices = services.filter(
