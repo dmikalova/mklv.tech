@@ -1,0 +1,55 @@
+{
+  "name": "@mklv/tech",
+  "exports": "./src/main.ts",
+
+  // Import map for npm packages and external dependencies
+  "imports": {
+    "@google-cloud/run": "npm:@google-cloud/run@^1",
+    "@std/assert": "jsr:@std/assert@^1.0.18",
+    "hono": "npm:hono@^4"
+  },
+
+  // Available tasks: deno task <name>
+  "tasks": {
+    // Development with hot reload
+    "dev": "deno run --permission-set --watch src/main.ts",
+    // Production start
+    "start": "deno run --permission-set src/main.ts",
+    // Type-check without running
+    "check": "deno check src/**/*.ts",
+    // Format all files
+    "fmt": "deno fmt",
+    // Lint TypeScript files
+    "lint": "deno lint",
+    // Install git hooks (run once after clone)
+    "setup": "lefthook install",
+    // Run tests
+    "test": "deno test --permission-set tests/"
+  },
+
+  // Default permissions for tasks
+  "permissions": {
+    "default": {
+      "env": true,
+      "net": true,
+      "read": true
+    }
+  },
+
+  // Formatting options
+  "fmt": {
+    "lineWidth": 80,
+    "semiColons": true,
+    "singleQuote": false
+  },
+
+  // Lint options
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+
+  // Exclude generated files from linting/formatting
+  "exclude": ["coverage/", ".git/"]
+}
